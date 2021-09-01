@@ -56,15 +56,15 @@ provider:
 #    - include-me-dir/**
 
 functions:
-    hello:
-      handler: handler.hello
+    getproduct:
+      handler: handlers/getproducts.getproduct
       events:
         - http:
             path: products
             method: get
             cors: true
     getproductbyid:
-      handler: handler.getproductbyid
+      handler: handlers/getproductbyid.getproductbyid
       events:
         - http:
             path: productsbyid
