@@ -10,7 +10,20 @@ module.exports.getproductbyid = async(event) => {
 
     if(found == null) {
       found = "Product not found <3";
+
+      return {
+        statusCode: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+        },
+        body: JSON.stringify(found)
+  
+              
+      };
     }
+
+    else {
   
     return {
       statusCode: 200,
@@ -22,6 +35,7 @@ module.exports.getproductbyid = async(event) => {
 
             
     };
+  }
     // Use this code if you don't use the http event with the LAMBDA-PROXY integration
     // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
   }
