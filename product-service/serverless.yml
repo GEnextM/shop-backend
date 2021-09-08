@@ -27,6 +27,8 @@ provider:
   stage: dev
   region: eu-west-1
 
+
+
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -44,8 +46,12 @@ provider:
 #            - "/*"
 
 # you can define service wide environment variables here
-#  environment:
-#    variable1: value1
+  environment:
+    PG_HOST: shopdb.c3hhf4uepxmf.eu-west-1.rds.amazonaws.com
+    PG_PORT: 5432
+    PG_DATABASE: shopdb
+    PG_USERNAME: genext
+    PG_PASSWORD: 44shop44
 
 # you can add packaging information here
 #package:
@@ -55,21 +61,32 @@ provider:
 #    - include-me.js
 #    - include-me-dir/**
 
+
+  
+
 functions:
-    hello:
-      handler: handler.hello
+    getproduct:
+      handler: handlers/getproducts.getproduct
       events:
         - http:
             path: products
             method: get
             cors: true
     getproductbyid:
-      handler: handler.getproductbyid
+      handler: handlers/getproductbyid.getproductbyid
       events:
         - http:
             path: productsbyid
             method: get
             cors: true 
+    createproduct:
+      handler: handlers/createproduct.createproduct
+      events:
+        - http:
+            path: product
+            method: any
+            cors: true
+            
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
