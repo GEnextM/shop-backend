@@ -26,16 +26,7 @@ module.exports.createproduct = async(event) => {
         let product = JSON.parse(body);
         console.log("Product title: " + JSON.stringify(product.title));
         console.log("Product price: " + JSON.stringify(product.price));
-        
-        // Insert into products
-        //   const ddlInsert = await client.query(`
-        //   insert into products (title,description,price) values
-        // ('${product.title}', '${product.description}', ${product.price})`);
-
-        // const ddlInsert = await client.query(`
-        // insert into stocks(count,product_id) values 
-        // (${product.count},${LAST_INSERT_ID()});`);
-
+// ddl query
         const ddlInsert = await client.query(`
         with first_insert as (
             insert into products (title,description,price)
