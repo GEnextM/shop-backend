@@ -1,23 +1,5 @@
-# Welcome to Serverless!
-#
-# This file is the main config file for your service.
-# It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
-# We've included some commented out config examples here.
-# Just uncomment any of them to get that config option.
-#
-# For full config options, check the docs:
-#    docs.serverless.com
-#
-# Happy Coding!
+service: import-service
 
-service: product-service
-# app and org for use with dashboard.serverless.com
-#app: your-app-name
-#org: your-org-name
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
 frameworkVersion: '2'
 
 provider:
@@ -26,7 +8,18 @@ provider:
   lambdaHashingVersion: 20201221
   stage: dev
   region: eu-west-1
-
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - s3:ListBucket
+          Resource: "arn:aws:s3:::import-service-genext"
+        - Effect: "Allow"
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::import-service-genext/*"
+        
 
 
 # you can add statements to the Lambda function's IAM Role here
@@ -34,24 +27,21 @@ provider:
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#      Resource: "arn:aws:s3:::import-service-genext"
 #    - Effect: "Allow"
 #      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
+#        - "s3:*"
+#      Resource: "arn:aws:s3:::import-service-genext/*"
 #            - "/*"
 
 # you can define service wide environment variables here
-  environment:
-    PG_HOST: ${env:PG_HOST}
-    PG_PORT: ${env:PG_PORT}
-    PG_DATABASE: ${env:PG_DATABASE}
-    PG_USERNAME: ${env:PG_USERNAME}
-    PG_PASSWORD: ${env:PG_PASSWORD}
+
+  # environment:
+  #   PG_HOST: ${env:PG_HOST}
+  #   PG_PORT: ${env:PG_PORT}
+  #   PG_DATABASE: ${env:PG_DATABASE}
+  #   PG_USERNAME: ${env:PG_USERNAME}
+  #   PG_PASSWORD: ${env:PG_PASSWORD}
 
 # you can add packaging information here
 #package:
@@ -61,31 +51,36 @@ provider:
 #    - include-me.js
 #    - include-me-dir/**
 
-
   
 
 functions:
-    getproduct:
-      handler: handlers/getproducts.getproduct
+    catalogsList:
+      handler: handler.catalogsList
       events:
-        - http:
-            path: products
-            method: get
+        - http: 
+            path: catalogs
+            method: GET
             cors: true
-    getproductbyid:
-      handler: handlers/getproductbyid.getproductbyid
+    importProductsFile:
+      handler: handler.catalogUpload
       events:
         - http:
-            path: productsbyid
-            method: get
-            cors: true 
-    createproduct:
-      handler: handlers/createproduct.createproduct
-      events:
-        - http:
-            path: product
-            method: any
+            path: import
+            method: GET
             cors: true
+          request:
+            parameters:
+              querystrings:
+                name: true
+    importFileParser:
+      handler: handler.catalogParse
+      events:
+        - s3:
+            bucket: import-service-genext
+            event: s3:ObjectCreated:*
+            rules:
+              - prefix: uploaded/
+            existing: true
             
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
