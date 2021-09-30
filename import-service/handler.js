@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const BUCKET = 'import-service-genext';
 const csv = require('csv-parser');
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 
 module.exports = {
     catalogsList: async function() {
@@ -56,7 +57,9 @@ module.exports = {
 
     catalogParse: function(event) {
         const s3 = new AWS.S3({ region: 'eu-west-1'});
-
+        const SERVICE_ENDPOINT ='https://fkwo5idvi2.execute-api.eu-west-1.amazonaws.com/dev/users'; // сюда кидаю пост
+        const sqs = new AWS.SQS(); 
+        
         event.Records.forEach(record => {
             const s3Stream = s3.getObject({
                 Bucket: BUCKET,
@@ -66,6 +69,15 @@ module.exports = {
             s3Stream.pipe(csv())
                 .on('data', (data) => {
                     console.log(data);
+                    // Тест
+                    const newdata = JSON.stringify(data);
+                    sqs.sendMessage({
+                        QueueUrl: process.env.SQS_URL,
+                        MessageBody: newdata
+                    }, () => {
+                        console.log('Send message for: ' + newdata);
+                    });
+                    // Конец теста
                 })
                 .on('end', async () => {
                     console.log('Copy from' + BUCKET + '/' + record.s3.object.key);
@@ -80,5 +92,57 @@ module.exports = {
                 });
         });
     },
+
+    
+    // SNS SQS
+    catalogItemsQueue: async function(event) { //читает из очереди
+        // const data = JSON.parse(event.body);
+        const snsClient = new SNSClient({});
+        const publishCommand = new PublishCommand({
+            TopicArn: 'arn:aws:sns:eu-west-1:180491745427:sqs-sns-topic', //proccess.env.SNS_ARN,
+            Subject: 'Import Service - Product import',
+            Message:'<h1>Hello</h1>\n' 
+        });
+
+        const result = await snsClient.send(publishCommand);
+        console.log("RESULT:" + result);
+        console.log("EVENT" + event.body);
+        console.log("DATA: " + JSON.parse(event.body));
+        
+        // const users = event.Records.map(({ body }) => body);
+        // const sns = new AWS.SNS({ region: 'us-west-1' });
+        // const test = "TEST TEXT SNS";
+        // sns.publish({
+        //     Subject: 'HELLO FROM SNS',
+        //     Message: 'TEST TEXT SEND VIA EMAIL',
+        //     TopicArn: process.env.SNS_ARN
+        // }, () => {
+        //     console.log('Send email for: ' + process.env.SNS_ARN);
+        // })
+
+        // console.log(users);
+    }
+    // userSubmit: function(event, context, callback) {
+    //     const sqs = new AWS.SQS(); 
+    //     const users = JSON.parse(event.body);
+    //     const test = "TEST TEXT SQS";
+    //     users.forEach(user => {
+    //         sqs.sendMessage({
+    //             QueueUrl: process.env.SQS_URL,
+    //             MessageBody: user
+    //         }, () => {
+    //             console.log('Send message for: ' + user);
+    //         });
+    //     });
+
+    //     callback(null, {
+    //         statusCode: 200,
+    //         headers: {
+    //             'Access-Control-Allow-Origin': '*'
+    //         }
+    //     });
+    // },
+
+
 
 }

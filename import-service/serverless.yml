@@ -19,9 +19,38 @@ provider:
           Action:
             - s3:*
           Resource: "arn:aws:s3:::import-service-genext/*"
+        - Effect: "Allow"
+          Action: "sqs:*"
+          Resource: 
+            - Fn::GetAtt: [ SQSQueue, Arn]
+        - Effect: "Allow"
+          Action: "sns:*"
+          Resource: 
+            Ref: SNSTopic
+  environment:
+    SQS_URL:
+      Ref: SQSQueue
+    SNS_ARN:
+      Ref: SNSTopic 
         
 
-
+resources:
+  Resources:
+    SQSQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: sns-sqs-queue
+    SNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: sqs-sns-topic
+    SNSSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: genexter@mail.ru
+        Protocol: email
+        TopicArn:
+          Ref: SNSTopic
 # you can add statements to the Lambda function's IAM Role here
 #  iamRoleStatements:
 #    - Effect: "Allow"
@@ -81,6 +110,21 @@ functions:
             rules:
               - prefix: uploaded/
             existing: true
+    usersSubmit:
+      handler: handler.usersSubmit
+      events:
+        - http:
+            path: users
+            method: post
+    catalogItemsQueue:
+      handler: handler.catalogItemsQueue
+      events:
+        - sqs:
+            batchSize: 3
+            arn:
+              Fn::GetAtt:
+                - SQSQueue
+                - Arn
             
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.33.0",
+    "@aws-sdk/client-sns": "^3.34.0",
     "csv-parser": "^3.0.0"
   }
 }
