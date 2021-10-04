@@ -95,19 +95,24 @@ module.exports = {
 
     
     // SNS SQS
-    catalogItemsQueue: async function(event) { //читает из очереди
-        // const data = JSON.parse(event.body);
+    catalogBatchProcess: async function(event) { //читает из очереди
+        const products = event.Records.map(({ body }) => body);
+        const jsonProducts = JSON.stringify(products);
+        console.log('DATA: ' + jsonProducts);
         const snsClient = new SNSClient({});
         const publishCommand = new PublishCommand({
-            TopicArn: 'arn:aws:sns:eu-west-1:180491745427:sqs-sns-topic', //proccess.env.SNS_ARN,
+            TopicArn: 'arn:aws:sns:eu-west-1:180491745427:sqs-sns-topic-task6', //proccess.env.SNS_ARN,
             Subject: 'Import Service - Product import',
-            Message:'<h1>Hello</h1>\n' 
+            Message:'<h1>Hello</h1>\n' + jsonProducts
         });
 
         const result = await snsClient.send(publishCommand);
-        console.log("RESULT:" + result);
-        console.log("EVENT" + event.body);
-        console.log("DATA: " + JSON.parse(event.body));
+
+
+        // const result = await snsClient.send(publishCommand);
+        // console.log("RESULT:" + result);
+        // console.log("EVENT" + event.body);
+        // console.log("DATA: " + JSON.parse(event.body));
         
         // const users = event.Records.map(({ body }) => body);
         // const sns = new AWS.SNS({ region: 'us-west-1' });
