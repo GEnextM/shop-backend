@@ -1,0 +1,100 @@
+service: import-service
+
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: eu-west-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - s3:ListBucket
+          Resource: "arn:aws:s3:::import-service-genext"
+        - Effect: "Allow"
+          Action:
+            - s3:*
+          Resource: "arn:aws:s3:::import-service-genext/*"
+        - Effect: "Allow"
+          Action: "sqs:*"
+          Resource: 
+            - Fn::GetAtt: [ catalogItemsQueue, Arn]
+        - Effect: "Allow"
+          Action: "sns:*"
+          Resource: 
+            Ref: createProductTopic
+  environment:
+    SQS_URL:
+      Ref: catalogItemsQueue
+    SNS_ARN:
+      Ref: createProductTopic 
+        
+
+resources:
+  Resources:
+    catalogItemsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: sns-sqs-queue-task6
+    createProductTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: sqs-sns-topic-task6
+    SNSSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: genexter@mail.ru
+        Protocol: email
+        TopicArn:
+          Ref: createProductTopic
+
+
+functions:
+    catalogsList:
+      handler: handler.catalogsList
+      events:
+        - http: 
+            path: catalogs
+            method: GET
+            cors: true
+    importProductsFile:
+      handler: handler.catalogUpload
+      events:
+        - http:
+            path: import
+            method: GET
+            cors: true
+          request:
+            parameters:
+              querystrings:
+                name: true
+    importFileParser:
+      handler: handler.catalogParse
+      events:
+        - s3:
+            bucket: import-service-genext
+            event: s3:ObjectCreated:*
+            rules:
+              - prefix: uploaded/
+            existing: true
+    usersSubmit:
+      handler: handler.usersSubmit
+      events:
+        - http:
+            path: users
+            method: post
+    catalogBatchProcess:
+      handler: handler.catalogBatchProcess
+      events:
+        - sqs:
+            batchSize: 5
+            arn:
+              Fn::GetAtt:
+                - catalogItemsQueue
+                - Arn
+            
+

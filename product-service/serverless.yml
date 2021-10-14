@@ -46,7 +46,16 @@ provider:
 #            - "/*"
 
 # you can define service wide environment variables here
+#<<<<<<< task6
+ # environment:
+ #   PG_HOST: ${env:PG_HOST}
+ #   PG_PORT: ${env:PG_PORT}
+ #   PG_DATABASE: ${env:PG_DATABASE}
+#    PG_USERNAME: ${env:PG_USERNAME}
+#    PG_PASSWORD: ${env:PG_PASSWORD}
+#=======
 
+#>>>>>>> main
 
 # you can add packaging information here
 #package:

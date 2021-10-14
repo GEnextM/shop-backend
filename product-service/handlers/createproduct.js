@@ -26,16 +26,8 @@ module.exports.createproduct = async(event) => {
         let product = JSON.parse(body);
         console.log("Product title: " + JSON.stringify(product.title));
         console.log("Product price: " + JSON.stringify(product.price));
-        
-        // Insert into products
-        //   const ddlInsert = await client.query(`
-        //   insert into products (title,description,price) values
-        // ('${product.title}', '${product.description}', ${product.price})`);
-
-        // const ddlInsert = await client.query(`
-        // insert into stocks(count,product_id) values 
-        // (${product.count},${LAST_INSERT_ID()});`);
-
+// transaction
+        const begin = await client.query(`BEGIN`);
         const ddlInsert = await client.query(`
         with first_insert as (
             insert into products (title,description,price)
@@ -46,7 +38,8 @@ module.exports.createproduct = async(event) => {
             insert into stocks(count,product_id) values
             (${product.count}, (select id from first_insert))
         )select * from products INNER JOIN stocks on product_id = id
-        `);     
+        `);
+        const commit = await client.query('COMMIT');
     }
     
    
