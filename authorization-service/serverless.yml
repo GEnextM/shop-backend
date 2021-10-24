@@ -1,0 +1,101 @@
+service: authorization-service
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: eu-west-1
+  environment:
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+
+functions:
+  basicAuthorizer:
+    handler: tokenAuth.basicAuthorizer
+    events:
+      - http:
+          path: token
+          method: get
+          cors: true
+  # requestAuth:
+  #   handler: handler.endpoint
+  #   events:
+  #     - http:
+  #         path: request
+  #         method: get
+  #         cors: true
+  #         authorizer:
+  #           name: tokenAuthorizer
+  #           arn: "arn:aws:lamda:#{AWS::Region}:#{AWS::AccountId}:function:authorization-service-dev-request-authorizer"
+  #           resultTtlSecond: 0
+  #           IdentitySource: method.request.querystring.token
+  #           type: token
+
+
+    # catalogsList:
+    #   handler: handler.catalogsList
+    #   events:
+    #     - http: 
+    #         path: catalogs
+    #         method: GET
+    #         cors: true
+    # importProductsFile:
+    #   handler: handler.catalogUpload
+    #   events:
+    #     - http:
+    #         path: import
+    #         method: GET
+    #         cors: true
+    #       request:
+    #         parameters:
+    #           querystrings:
+    #             name: true
+    # importFileParser:
+    #   handler: handler.catalogParse
+    #   events:
+    #     - s3:
+    #         bucket: import-service-genext
+    #         event: s3:ObjectCreated:*
+    #         rules:
+    #           - prefix: uploaded/
+    #         existing: true
+    # usersSubmit:
+    #   handler: handler.usersSubmit
+    #   events:
+    #     - http:
+    #         path: users
+    #         method: post
+    # catalogBatchProcess:
+    #   handler: handler.catalogBatchProcess
+    #   events:
+    #     - sqs:
+    #         batchSize: 5
+    #         arn:
+    #           Fn::GetAtt:
+    #             - catalogItemsQueue
+    #             - Arn
+            
+

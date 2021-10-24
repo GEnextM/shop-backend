@@ -1,6 +1,7 @@
 service: import-service
 
-frameworkVersion: '2'
+plugins:
+  - serverless-dotenv-plugin
 
 provider:
   name: aws
@@ -51,6 +52,24 @@ resources:
         Protocol: email
         TopicArn:
           Ref: createProductTopic
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
 
 
 functions:
@@ -64,14 +83,26 @@ functions:
     importProductsFile:
       handler: handler.catalogUpload
       events:
-        - http:
-            path: import
-            method: GET
-            cors: true
+      - http:
+          method: GET
+          path: import
           request:
             parameters:
               querystrings:
                 name: true
+          cors: true
+          authorizer:
+            name: tokenAuthorizer
+            arn:
+              !Join
+                - ':'
+                - - 'arn:aws:lambda'
+                  - !Ref AWS::Region
+                  - !Ref AWS::AccountId
+                  - 'function:authorization-service-dev-basicAuthorizer'
+            resultTtlInSeconds: 0
+            identitySource: method.request.header.Authorization
+            type: token
     importFileParser:
       handler: handler.catalogParse
       events:
